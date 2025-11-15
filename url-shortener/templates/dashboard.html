@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/dashboard">Dashboard</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>Your Shortened URLs</h2>
+
+                {% if urls.is_empty() %}
+                <p class="empty-state">No URLs yet. Create your first short link!</p>
+                {% else %}
+                <div class="url-list">
+                    {% for url in urls %}
+                    <div class="url-item">
+                        <div class="url-info">
+                            <div class="short-code">
+                                <strong>/{{ url.short_code }}</strong>
+                            </div>
+                            <div class="original-url">
+                                <a href="{{ url.original_url }}" target="_blank">
+                                    {{ url.original_url }}
+                                </a>
+                            </div>
+                            <div class="url-meta">
+                                <span>Created: {{ url.created_at }}</span>
+                                <span>Clicks: {{ url.click_count }}</span>
+                                {% if url.expires_at.is_some() %}
+                                <span>Expires: {{ url.expires_at.unwrap() }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="url-actions">
+                            <a href="/api/urls/{{ url.short_code }}" class="btn-stats">
+                                Stats
+                            </a>
+                            <a href="/api/urls/{{ url.short_code }}/qr" class="btn-qr">
+                                QR
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

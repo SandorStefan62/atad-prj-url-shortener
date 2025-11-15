@@ -1,4 +1,8 @@
+use std::sync::Arc;
+
+use axum::{Router, routing::get};
 use sqlx::postgres::PgPoolOptions;
+use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use tracing_subscriber;
 
 use crate::config::Config;
@@ -6,17 +10,24 @@ use crate::config::Config;
 mod config;
 mod db;
 mod error;
+mod handlers;
 mod models;
+mod templates;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub db: sqlx::PgPool,
+    pub config: Arc<Config>,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     dotenvy::dotenv().ok();
 
-    let config = Config::get_env_vars()?;
-    println!("Database URL = {}", config.database_url);
+    let config = Arc::new(Config::get_env_vars()?);
 
-    let pool = PgPoolOptions::new()
+    let db = PgPoolOptions::new()
         .max_connections(5)
         .connect(&config.database_url)
         .await
@@ -24,24 +35,25 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Database connected successfully");
 
-    sqlx::query("DELETE FROM urls").execute(&pool).await?;
+    let state = AppState {
+        db,
+        config: config.clone(),
+    };
 
-    let created = db::queries::create_url(&pool, "https://example.com", "ex1234", None).await?;
-    println!("Created: {:?}", created);
+    let app = Router::new()
+        .route("/", get(handlers::web::index))
+        .route("/dashboard", get(handlers::web::dashboard))
+        .nest_service("/static", ServeDir::new("static"))
+        .layer(CorsLayer::permissive())
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
 
-    let exists = db::queries::code_exists(&pool, "ex1234").await?;
-    println!("Code exists? {}", exists);
+    let address = format!("{}:{}", config.server_host, config.server_port);
+    let listener = tokio::net::TcpListener::bind(&address).await?;
 
-    let fetched = db::queries::get_url_by_code(&pool, "ex1234").await?;
-    println!("Fetched: {:?}", fetched);
+    tracing::info!("Server running on http://{}", address);
 
-    db::queries::increment_click(&pool, fetched.id).await?;
-
-    let fetched = db::queries::get_url_by_code(&pool, "ex1234").await?;
-    println!("Fetched: {:?}", fetched);
-
-    let all = db::queries::list_all_urls(&pool).await?;
-    println!("All urls: {:?}", all);
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

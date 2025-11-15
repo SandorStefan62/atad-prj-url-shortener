@@ -5,7 +5,9 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
-axum = { version = "0.8.6", features = ["macros"] }
+askama = { version = "0.12", features = ["with-axum"] }
+askama_axum = "0.4"
+axum = { version = "0.7", features = ["macros"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 dotenvy = "0.15.7"
 rand = "0.9.2"
