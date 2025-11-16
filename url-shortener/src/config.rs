@@ -7,6 +7,8 @@ pub struct Config {
     pub database_url: String,
     pub server_host: String,
     pub server_port: u16,
+    pub short_code_length: usize,
+    pub base_url: String,
 }
 
 impl Config {
@@ -17,6 +19,10 @@ impl Config {
             server_port: env::var("SERVER_PORT")
                 .unwrap_or_else(|_| "8080".to_string())
                 .parse()?,
+            short_code_length: env::var("SHORT_CODE_LENGTH")
+                .unwrap_or_else(|_| "6".to_string())
+                .parse()?,
+            base_url: env::var("BASE_URL")?,
         })
     }
 }

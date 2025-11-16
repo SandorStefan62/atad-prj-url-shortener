@@ -11,3 +11,18 @@ pub struct Url {
     pub expires_at: Option<DateTime<Utc>>,
     pub click_count: i32,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUrlRequest {
+    pub url: String,
+    pub custom_code: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreateUrlResponse {
+    pub short_url: String,
+    pub short_code: String,
+    pub original_url: String,
+    pub expires_at: Option<DateTime<Utc>>,
+}
