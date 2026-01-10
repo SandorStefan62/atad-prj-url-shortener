@@ -68,9 +68,9 @@ url_shortener/
 - Start of RESTful api.
 
 <b>Next steps to implement</b>
-- Rate limiting.
-- Collision detection.
-- Click tracking with metadata.
-- Some sort of analytics (TBD).
-- QR code generation.
-- Expiration dates.
+- [] Rate limiting.
+- [] Collision detection.
+- [x] Click tracking with metadata.
+- [x] Some sort of analytics (TBD).
+- [] QR code generation.
+- [x] Expiration dates.
