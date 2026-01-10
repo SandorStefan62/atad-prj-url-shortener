@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     Router,
@@ -38,6 +38,8 @@ async fn main() -> anyhow::Result<()> {
         .expect("Failed to connect to database.");
 
     tracing::info!("Database connected successfully");
+
+    sqlx::migrate!("./migrations").run(&db).await?;
 
     let code = services::shorten::generate_short_code(6);
     println!("Short code: {}", code);
@@ -86,6 +88,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/dashboard", get(handlers::web::dashboard))
         .route("/api/urls", get(handlers::shorten::list_urls))
         .route("/api/shorten", post(handlers::shorten::create_short_url))
+        .route(
+            "/api/urls/:short_code",
+            get(handlers::analytics::get_url_stats),
+        )
+        .route("/:short_code", get(handlers::redirect::redirect))
         .nest_service("/static", ServeDir::new("static"))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
@@ -96,7 +103,11 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Server running on http://{}", address);
 
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
 
     Ok(())
 }
