@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS urls (
 );
 
 -- index for fast lookups
-CREATE INDEX idx_urls_short_code ON urls(short_code);
+CREATE INDEX IF NOT EXISTS idx_urls_short_code ON urls(short_code);
 
 -- index for descending sorting
-CREATE INDEX idx_urls_created_at ON urls(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_urls_created_at ON urls(created_at DESC);
