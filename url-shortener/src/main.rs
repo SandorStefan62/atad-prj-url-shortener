@@ -92,6 +92,10 @@ async fn main() -> anyhow::Result<()> {
             "/api/urls/:short_code",
             get(handlers::analytics::get_url_stats),
         )
+        .route(
+            "/api/urls/:short_code/qr",
+            get(handlers::analytics::get_qr_code),
+        )
         .route("/:short_code", get(handlers::redirect::redirect))
         .nest_service("/static", ServeDir::new("static"))
         .layer(CorsLayer::permissive())
