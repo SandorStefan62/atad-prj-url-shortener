@@ -1,11 +1,10 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Click {
-    pub id: Uuid,
-    pub url_id: Uuid,
+    pub id: String,
+    pub url_id: String,
     pub clicked_at: DateTime<Utc>,
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,

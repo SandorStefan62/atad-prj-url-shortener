@@ -39,7 +39,7 @@ pub async fn redirect(
     let db = state.db.clone();
     let url_id = url.id;
     tokio::spawn(async move {
-        let _ = queries::record_click(&db, url_id, ip_address, user_agent, referer).await;
+        let _ = queries::record_click(&db, url_id.clone(), ip_address, user_agent, referer).await;
         let _ = queries::increment_click(&db, url_id).await;
     });
 

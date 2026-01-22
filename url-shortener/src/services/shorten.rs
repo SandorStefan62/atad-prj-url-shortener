@@ -1,7 +1,7 @@
 use crate::db::queries;
 use crate::error::{AppError, AppResult};
 use nanoid::nanoid;
-use sqlx::PgPool;
+use sqlx::SqlitePool;
 
 const ALPHABET: [char; 62] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
@@ -14,7 +14,7 @@ pub fn generate_short_code(length: usize) -> String {
     nanoid!(length, &ALPHABET)
 }
 
-pub async fn generate_unique_code(pool: &PgPool, length: usize) -> AppResult<String> {
+pub async fn generate_unique_code(pool: &SqlitePool, length: usize) -> AppResult<String> {
     const MAX_RETRIES: u8 = 10;
 
     for _ in 0..MAX_RETRIES {

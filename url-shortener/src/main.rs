@@ -1,10 +1,10 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, path::Path, sync::Arc};
 
 use axum::{
     Router,
     routing::{get, post},
 };
-use sqlx::postgres::PgPoolOptions;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use tracing_subscriber;
 
@@ -20,7 +20,7 @@ mod templates;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: sqlx::PgPool,
+    pub db: sqlx::SqlitePool,
     pub config: Arc<Config>,
 }
 
@@ -31,15 +31,35 @@ async fn main() -> anyhow::Result<()> {
 
     let config = Arc::new(Config::get_env_vars()?);
 
-    let db = PgPoolOptions::new()
+    // create if not existant sqlite db file
+    let db_path = config
+        .database_url
+        .strip_prefix("sqlite:")
+        .unwrap_or("url_shortener.db");
+
+    if !Path::new(db_path).exists() {
+        tracing::info!(
+            "Databasae file not found. Created new database at {}",
+            db_path
+        );
+    } else {
+        tracing::info!("Using existing database at: {}", db_path);
+    }
+
+    let connecting_options = SqliteConnectOptions::new()
+        .filename(db_path)
+        .create_if_missing(true);
+
+    let db = SqlitePoolOptions::new()
         .max_connections(5)
-        .connect(&config.database_url)
+        .connect_with(connecting_options)
         .await
         .expect("Failed to connect to database.");
 
     tracing::info!("Database connected successfully");
 
     sqlx::migrate!("./migrations").run(&db).await?;
+    tracing::info!("Migrations completed successfully");
 
     let code = services::shorten::generate_short_code(6);
     println!("Short code: {}", code);
