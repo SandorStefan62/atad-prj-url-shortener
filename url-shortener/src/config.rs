@@ -9,6 +9,7 @@ pub struct Config {
     pub server_port: u16,
     pub short_code_length: usize,
     pub base_url: String,
+    pub requests_per_minute: u32,
 }
 
 impl Config {
@@ -23,6 +24,9 @@ impl Config {
                 .unwrap_or_else(|_| "6".to_string())
                 .parse()?,
             base_url: env::var("BASE_URL")?,
+            requests_per_minute: env::var("RATE_LIMIT_PER_MINUTE")
+                .unwrap_or_else(|_| "5".to_string())
+                .parse()?,
         })
     }
 }

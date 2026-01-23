@@ -8,7 +8,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use tracing_subscriber;
 
-use crate::config::Config;
+use crate::{config::Config, services::rate_limiter::RateLimiter};
 
 mod config;
 mod db;
@@ -22,6 +22,7 @@ mod templates;
 pub struct AppState {
     pub db: sqlx::SqlitePool,
     pub config: Arc<Config>,
+    pub rate_limiter: Arc<RateLimiter>,
 }
 
 #[tokio::main]
@@ -60,6 +61,8 @@ async fn main() -> anyhow::Result<()> {
 
     sqlx::migrate!("./migrations").run(&db).await?;
     tracing::info!("Migrations completed successfully");
+
+    let rate_limiter = Arc::new(RateLimiter::new(config.requests_per_minute));
 
     let code = services::shorten::generate_short_code(6);
     println!("Short code: {}", code);
@@ -101,6 +104,7 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         db,
         config: config.clone(),
+        rate_limiter,
     };
 
     let app = Router::new()

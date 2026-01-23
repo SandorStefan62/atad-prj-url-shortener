@@ -28,6 +28,9 @@ pub enum AppError {
 
     #[error("Internal server errror")]
     Internal(#[from] anyhow::Error),
+
+    #[error("Rate limit exceeded")]
+    RateLimitExceeded,
 }
 
 impl IntoResponse for AppError {
@@ -40,6 +43,7 @@ impl IntoResponse for AppError {
             AppError::UrlExpired => (StatusCode::GONE, "Url has expired"),
             AppError::Validation(ref message) => (StatusCode::BAD_REQUEST, message.as_str()),
             AppError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
+            AppError::RateLimitExceeded => (StatusCode::TOO_MANY_REQUESTS, "Rate limit exceeded"),
         };
 
         let body = Json(json!({

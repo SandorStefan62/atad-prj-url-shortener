@@ -1,14 +1,26 @@
+use std::net::SocketAddr;
+
 use crate::AppState;
 use crate::db::queries;
 use crate::error::{AppError, AppResult};
 use crate::models::{CreateUrlRequest, CreateUrlResponse, Url};
 use crate::services::shorten::{generate_unique_code, validate_custom_code, validate_url};
+use axum::extract::ConnectInfo;
 use axum::{Json, extract::State};
 
 pub async fn create_short_url(
     State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(payload): Json<CreateUrlRequest>,
 ) -> AppResult<Json<CreateUrlResponse>> {
+    let ip = addr.ip();
+    tracing::info!("[CREATE_SHORT_URL] request from IP: {}", ip);
+
+    if !state.rate_limiter.check(ip) {
+        tracing::warn!("[CREATE_SHORT_URL] rate limit exceeded for IP: {}", ip);
+        return Err(AppError::RateLimitExceeded);
+    }
+
     validate_url(&payload.url)?;
 
     let short_code = if let Some(custom_code) = payload.custom_code {
