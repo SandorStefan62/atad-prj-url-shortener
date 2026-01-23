@@ -15,7 +15,16 @@ pub async fn redirect(
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> AppResult<impl IntoResponse> {
-    tracing::info!("Redirect requested for code: {}", short_code);
+    tracing::info!(
+        "Redirect requested for code: {} from IP: {}",
+        short_code,
+        addr.ip()
+    );
+
+    if !state.rate_limiter.check(addr.ip()) {
+        tracing::warn!("Rate limit exceeded for IP: {}", addr.ip().to_string());
+        return Err(AppError::RateLimitExceeded);
+    }
 
     let url = queries::get_url_by_code(&state.db, &short_code).await?;
 
