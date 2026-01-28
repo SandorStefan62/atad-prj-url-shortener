@@ -89,7 +89,7 @@ pub async fn record_click(
 ) -> AppResult<Click> {
     let click = sqlx::query_as::<_, Click>(
         r#"
-        INSERT INTO stats (url_id, ip_address, user_agent, referer)
+        INSERT INTO clicks (url_id, ip_address, user_agent, referer)
         VALUES (?, ?, ?, ?)
         RETURNING *
         "#,
